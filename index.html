@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Stream</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            function updatePrediction() {
+                $.get('/get_prediction', function(data) {
+                    $('#prediction_result').text('Prediction Result: ' + data);
+                    // Check if the prediction is updated correctly
+                    if (data !== 'No prediction yet') {
+                        showNotification('Gesture converted correctly!');
+                    }
+                });
+            }
+
+            function showNotification(message) {
+                $('#notification').text(message);
+                $('#notification').show();
+                setTimeout(function() {
+                    $('#notification').hide();
+                }, 3000); // Hide the notification after 3 seconds
+            }
+
+            setInterval(updatePrediction, 5000); // Update every 5 seconds
+
+            // Hide the notification initially
+            $('#notification').hide();
+        });
+    </script>
+</head>
+<body>
+    <h1>Video Stream</h1>
+    <img src="{{ url_for('video_feed') }}" width="640" height="480">
+    <h2 id="prediction_result">Prediction Result: No prediction yet</h2>
+    <div id="notification" style="color: green; display: none;"></div>
+</body>
+</html>
