@@ -8,7 +8,7 @@
 Make sure they have an internet connection while running these commands so that pip can download and install the packages.
 
 
-**Run the Application: **After installing Python and the required packages, the application by executing the following command:
+**Run the Application:** After installing Python and the required packages, the application by executing the following command:
 
 **python app.py**
 
