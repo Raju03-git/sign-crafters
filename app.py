@@ -6,35 +6,24 @@ import requests
 
 app = Flask(__name__)
 
-# Create a folder to store frames if it doesn't exist
 if not os.path.exists('Frames'):
     os.makedirs('Frames')
 
-# Define the API endpoint and other parameters
-endpoint = 'https://centralindia.api.cognitive.microsoft.com'
-projectId = 'e178ed51-56f9-4882-b5ef-329114969d2d'
-iterationId = 'Iteration4'
-predictionKey = 'bfba0ebe4ca748119c16625f57f3453d'
+endpoint = 'https://signlanguageassistant-prediction.cognitiveservices.azure.com'
+projectId = 'a55a082e-6cdb-4cf9-bc89-c68dd4972b6f'
+iterationId = 'Iteration2'
+predictionKey = 'a25c47fce3f74281a659819b495c00dc'
 
-# Define the base URL for the prediction API
 api_url = f'{endpoint}/customvision/v3.0/prediction/{projectId}/classify/iterations/{iterationId}/image'
-
-# Define headers
 headers = {
     'Prediction-Key': predictionKey
 }
 
-
-# Define a global variable to store the latest frame
 latest_frame = None
 
-# Function to make the API call for prediction
 def make_prediction(image_path):
     try:
-        # Create a FormData-like object
         files = {'image': ('image.jpg', open(image_path, 'rb'), 'image/jpeg')}
-        
-        # Make the API call
         response = requests.post(api_url, headers=headers, files=files)
 
         if response.status_code == 200:
@@ -50,37 +39,29 @@ def make_prediction(image_path):
     return "Error"
 
 def video_stream():
-    global latest_frame  # Access the global variable
-    # Open the camera (0 represents the default camera, change if necessary)
+    global latest_frame
     cap = cv2.VideoCapture(0)
-
-    # Initialize a timer
     last_frame_time = time.time()
-    prediction_result = "No prediction yet"
+    prediction_result = ""
     while True:
         success, frame = cap.read()
         if not success:
             break
 
-        # Calculate the time since the last frame
         current_time = time.time()
         elapsed_time = current_time - last_frame_time
-        
-        # If 5 seconds have passed, save the frame and update the timer
+
         if elapsed_time >= 5:
             frame_filename = os.path.join('Frames', f'frame_{current_time}.jpg')
             cv2.imwrite(frame_filename, frame)
-            
-             # Update the global variable with the latest frame
+
             latest_frame = frame_filename
 
-            # Make the API call for prediction
             prediction_result = make_prediction(frame_filename)
             print('Prediction Result:', prediction_result)
-            
+
             last_frame_time = current_time
 
-        # Convert the frame to JPEG
         ret, buffer = cv2.imencode('.jpg', frame)
         if ret:
             frame = buffer.tobytes()
@@ -90,18 +71,16 @@ def video_stream():
 
 @app.route('/')
 def index():
-    # Pass an initial prediction result (e.g., "No prediction yet") to the template
-    initial_prediction = "No prediction yet"
+    initial_prediction = ""
     return render_template('index.html', prediction_result=initial_prediction)
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(video_stream(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(video_stream(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/get_prediction')
 def get_prediction():
-    global latest_frame  # Access the global variable
+    global latest_frame
     if latest_frame:
         prediction_result = make_prediction(latest_frame)
         return prediction_result
