@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Deaf Medium</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -8,18 +9,24 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
     <script>
+        var lastData = null; // Initialize a variable to store the last received data
         var predictions = [];
-
+        var processing_enabled = false; // To track processing status
         $(document).ready(function () {
             function updatePrediction() {
-                $.get('/get_prediction', function (data) {
-                    if (data !== 'No prediction yet') {
-                        predictions.push(data);
-                        showNotification('Gesture converted correctly: ' + data);
-                    }
-                    $('#prediction_result').text(data);
-                    $('#gestureText').html(predictions.join('<BR>'));
-                });
+                if (processing_enabled) {
+                    $.get('/get_prediction', function (data) {
+                        if (data !== 'No prediction yet') {
+                            if (data !== lastData) {
+                                predictions.push(data);
+                                showNotification('Gesture converted correctly: ' + data);
+                            }
+                            lastData = data; // Update the last received data
+                        }
+                        $('#prediction_result').text(data);
+                        $('#gestureText').html(predictions.join('<BR>'));
+                    });
+                }
             }
 
             function showNotification(message) {
@@ -33,6 +40,35 @@
             setInterval(updatePrediction, 5000);
 
             $('#notification').hide();
+
+
+            // Function to start video processing
+            function startProcessing() {
+                $.get('/start_processing', function (data) {
+                    if (data === 'Video processing started') {
+                        processing_enabled = true; // Enable processing
+                        showNotification('Video processing started');
+                    } else {
+                        showNotification('Failed to start video processing');
+                    }
+                });
+            }
+
+            // Function to stop video processing
+            function stopProcessing() {
+                $.get('/stop_processing', function (data) {
+                    if (data === 'Video processing stopped') {
+                        processing_enabled = false; // Disable processing
+                        showNotification('Video processing stopped');
+                    } else {
+                        showNotification('Failed to stop video processing');
+                    }
+                });
+            }
+
+            // Attach start and stop functions to the buttons
+            $('#start-button').click(startProcessing);
+            $('#stop-button').click(stopProcessing);
         });
     </script>
 </head>
@@ -141,6 +177,17 @@
                         </ul>
                     </div>
                 </div>
+                <div>
+                    <!-- Start Button -->
+                    <button id="start-button" class="p-2 border-[1px] rounded-lg">
+                        <i class="fa-solid fa-play fa-xl"></i> Start
+                    </button>
+
+                    <!-- Stop Button -->
+                    <button id="stop-button" class="p-2 border-[1px] rounded-lg">
+                        <i class="fa-solid fa-stop fa-xl"></i> Stop
+                    </button>
+                </div>
             </div>
             <div class="grow bg-gray-50">
                 <div class="p-4">
@@ -166,7 +213,8 @@
                             <span id="prediction_result">.....</span>
                         </div>
                     </div>
-                    <div id="notification" style="color: green; display: none;" class="flex justify-center gap-5 text-[#546e7a]"></div>
+                    <div id="notification" style="color: green; display: none;"
+                        class="flex justify-center gap-5 text-[#546e7a]"></div>
                 </div>
             </div>
             <div class="basis-1/4 border-l-[1px]">
@@ -204,4 +252,5 @@
         </div>
     </div>
 </body>
+
 </html>

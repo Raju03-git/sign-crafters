@@ -10,7 +10,7 @@ if not os.path.exists('Frames'):
     os.makedirs('Frames')
 
 endpoint = 'https://signlanguageassistant-prediction.cognitiveservices.azure.com'
-projectId = 'a55a082e-6cdb-4cf9-bc89-c68dd4972b6f'
+projectId = '3fa73b26-9b74-4fdc-a786-4d6570286e5b'
 iterationId = 'Iteration2'
 predictionKey = 'a25c47fce3f74281a659819b495c00dc'
 
@@ -20,7 +20,7 @@ headers = {
 }
 
 latest_frame = None
-
+processing_enabled = False
 def make_prediction(image_path):
     try:
         files = {'image': ('image.jpg', open(image_path, 'rb'), 'image/jpeg')}
@@ -51,7 +51,7 @@ def video_stream():
         current_time = time.time()
         elapsed_time = current_time - last_frame_time
 
-        if elapsed_time >= 5:
+        if elapsed_time >= 5 and processing_enabled:
             frame_filename = os.path.join('Frames', f'frame_{current_time}.jpg')
             cv2.imwrite(frame_filename, frame)
 
@@ -86,6 +86,18 @@ def get_prediction():
         return prediction_result
     else:
         return "No prediction yet"
+
+@app.route('/start_processing')
+def start_video_processing():
+    global processing_enabled
+    processing_enabled = True
+    return "Video processing started"
+
+@app.route('/stop_processing')
+def stop_video_processing():
+    global processing_enabled
+    processing_enabled = False
+    return "Video processing stopped"
 
 if __name__ == '__main__':
     app.run(debug=True)
